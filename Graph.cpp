@@ -13,6 +13,7 @@ Graph::Graph(istream& ins) : numEdges_(0) {
   ins >> numEdges;
   vertices_.reserve(numVertices);
   names_.reserve(numVertices);
+  numEdges_ = numEdges;
   for (size_t i = 0; i < numVertices; i++) {
     string name;
     ins >> name;
@@ -41,6 +42,13 @@ bool Graph::add_vertex(const string& v) {
   // Implement here
   // Return true if the vertex can be added, otherwise return false (vertex name
   // is invalid or a vertex with the same name already exists).
+  if (! isValidVertexName(v)) return false;
+  if ( names_.find(v) != names_.end() ) return false;
+
+  size_t curSize = names_.size();
+  names_[v] = curSize; // vector index for vertices_
+  vertices_.push_back(Vertex(v));
+  return true;
 }
 
 bool Graph::add_edge(const string& v1, const string& v2, unsigned int cost) {
@@ -48,11 +56,32 @@ bool Graph::add_edge(const string& v1, const string& v2, unsigned int cost) {
   // Return true if the edge can be added, otherwise return false (either vertex
   // cannot be found, or the cost is 0 or UINT_MAX).
   // Remember to increment numEdges_.
+  if ( names_.find(v1) == names_.end() ) return false;
+  if ( names_.find(v2) == names_.end() ) return false;
+  if ( cost == 0 || cost == UINT_MAX ) return false;
+  vertices_[names_[v1]].neighbors.push_back(make_pair( names_[v2] , cost ));
+  return true;
 }
 
 void Graph::bfs() {
   // Implement BFS here
   // You are NOT allowed to modify Vertex.
+
+  vertices_[0].distance = 0;
+  queue<size_t> bfsqueue;
+  bfsqueue.push(0);
+  while (!bfsqueue.empty()){
+      std::size_t vNode = bfsqueue.front();
+      bfsqueue.pop();
+      for(pair<string, unsigned int>  neiNode : getNeighbors(vertices_[vNode].label)){
+          //for(auto neiNode : getNeighbors(vertices_[vNode].label)){
+          if ( getDistance(neiNode.first) == UINT_MAX ){
+              vertices_[names_[neiNode.first]].distance = getDistance(vertices_[vNode].label) + 1;
+              vertices_[names_[neiNode.first]].prev = vNode;
+              bfsqueue.push(names_[neiNode.first]);
+          }
+      }
+  }
 }
 
 list<string> Graph::getVertices() const {
